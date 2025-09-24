@@ -12,6 +12,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 0
+    ports:
+      - "5000:5000"
 
     depends_on:
       - mysql
@@ -26,7 +28,7 @@ services:
       MYSQL_USER: labo02
       MYSQL_PASSWORD: labo02
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./db-init:/docker-entrypoint-initdb.d

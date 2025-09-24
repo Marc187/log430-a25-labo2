@@ -60,3 +60,9 @@ INSERT INTO products (name, sku, price) VALUES
 INSERT INTO orders (name, user_id, total_amount) VALUES
 (1, 1999.99),
 (2, 59.50);
+
+
+INSERT INTO orders (user_id, total_amount) VALUES
+(1, 1999.99),
+(2, 59.50);
+
