@@ -21,6 +21,15 @@ def get_orders_from_mysql(limit=9999):
 def get_orders_from_redis(limit=9999):
     """Get last X orders"""
     # TODO: écrivez la méthode
+    r = get_redis_conn()
+
+    order_ids = r.lrange("orders", 0, limit-1)
+
+    orders = []
+
+
+    orders = [r.hgetall(order_id.decode()) for order_id in order_ids]
+
     print(limit)
     return []
 
@@ -28,4 +37,11 @@ def get_highest_spending_users():
     """Get report of best selling products"""
     # TODO: écrivez la méthode
     # triez le résultat par nombre de commandes (ordre décroissant)
+
+    expenses_by_user = defaultdict(float)
+    for order in orders:
+        expenses_by_user[order.user_id] += order.total
+    highest_spending_users = sorted(expenses_by_user.items(), key=lambda item: item[1], reverse=True)
+
+
     return []
