@@ -89,7 +89,7 @@ jobs:
           REDIS_PORT: ${{ env.REDIS_PORT }}
           REDIS_DB: ${{ env.REDIS_DB }}
         run: |
-          pytest -q --maxfail=1 --disable-warnings --cov=./ --cov-report=xml
+          pytest -q --maxfail=1 --disable-warnings
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
