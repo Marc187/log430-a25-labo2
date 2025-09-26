@@ -78,6 +78,9 @@ jobs:
           echo "REDIS_PORT=6379" >> $GITHUB_ENV
           echo "REDIS_DB=0" >> $GITHUB_ENV
 
+      - name: Add src to PYTHONPATH
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+
       - name: Run tests
         env:
           DB_HOST: ${{ env.DB_HOST }}
@@ -88,6 +91,7 @@ jobs:
           REDIS_HOST: ${{ env.REDIS_HOST }}
           REDIS_PORT: ${{ env.REDIS_PORT }}
           REDIS_DB: ${{ env.REDIS_DB }}
+          PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
           pytest -q --maxfail=1 --disable-warnings
 
