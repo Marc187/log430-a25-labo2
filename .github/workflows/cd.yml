@@ -1,8 +1,9 @@
 name: Deploy (Self-Hosted)
 
 on:
-  push:
-    branches: [ main, master ]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -26,7 +27,7 @@ jobs:
           DB_PORT=3306
           DB_NAME=labo02_db
           DB_USER=labo02
-          DB_PASSWORD=labo02
+          DB_PASS=labo02
           REDIS_HOST=redis
           REDIS_PORT=6379
           REDIS_DB=0

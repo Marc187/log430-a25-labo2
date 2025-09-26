@@ -9,7 +9,7 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: labo02
-      DB_PASSWORD: labo02
+      DB_PASS: labo02
       DB_NAME: labo02_db
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -32,7 +32,7 @@ services:
       MYSQL_USER: labo02
       MYSQL_PASSWORD: labo02
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./db-init:/docker-entrypoint-initdb.d
