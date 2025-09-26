@@ -8,6 +8,7 @@ from models.order_item import OrderItem
 from models.order import Order
 from queries.read_order import get_orders_from_mysql
 from db import get_sqlalchemy_session, get_redis_conn
+import json
 
 def add_order(user_id: int, items: list):
     """Insert order with items in MySQL, keep Redis in sync"""
@@ -53,6 +54,7 @@ def add_order(user_id: int, items: list):
 
         order_id = new_order.id
 
+        created_items = []
         for item_data in order_items_data:
             order_item = OrderItem(
                 order_id=order_id,
@@ -61,11 +63,12 @@ def add_order(user_id: int, items: list):
                 unit_price=item_data['unit_price']
             )
             session.add(order_item)
+            created_items.append(order_item)
 
         session.commit()
 
         # TODO: ajouter la commande à Redis
-        add_order_to_redis(order_id, user_id, total_amount, items)
+        add_order_to_redis(order_id, user_id, total_amount, created_items)
 
         return order_id
 
@@ -100,31 +103,49 @@ def delete_order(order_id: int):
 def add_order_to_redis(order_id, user_id, total_amount, items):
     """Insert order to Redis"""
     r = get_redis_conn()
-    print(r)
-
     pipe = r.pipeline()
+
+    # Orders
     pipe.hset(f"order:{order_id}", mapping={
         "id": order_id,
         "user_id": user_id,
         "total_amount": total_amount,
     })
 
-    pipe.sadd(f"order:{order_id}:item_ids", order_id)
 
-    # for item in items:
-    #     pipe.hset(f"order_item:{item.id}", mapping={
-    #         "id": order_id,
-    #         "order_id": item.order_id,
-    #         "product_id": item.product_id,
-    #         "quantity": item.quantity,
-    #         "unit_price": item.quantity,
-    #     })
+    for item in items:
+        key = f"order_item:{item.id}"
+
+        # OrderItems
+        pipe.hset(key, mapping={
+            "order_id": order_id,
+            "product_id": item.product_id,
+            "quantity": item.quantity,
+            "unit_price": item.unit_price
+        })
+
+        # Order item keys
+        pipe.sadd(f"order:{order_id}:items", key)
+
+        # Increment product counter
+        pipe.incrby(f"product:{item.product_id}", int(item.quantity))
 
     pipe.execute()
 
 def delete_order_from_redis(order_id):
     """Delete order from Redis"""
-    pass
+    r = get_redis_conn()
+    pipe = r.pipeline()
+
+    item_keys = r.smembers(f"order:{order_id}:items")
+
+    for item_key in item_keys:
+        pipe.delete(item_key)
+
+    pipe.delete(f"order:{order_id}:items")
+    pipe.delete(f"order:{order_id}")
+
+    pipe.execute()
 
 def sync_all_orders_to_redis():
     """ Sync orders from MySQL to Redis """
@@ -136,12 +157,13 @@ def sync_all_orders_to_redis():
         if len(orders_in_redis) == 0:
             # mysql
             orders_from_mysql = get_orders_from_mysql()
-            
+
+            print(orders_from_mysql)
+
             for order in orders_from_mysql:
                 # TODO: terminez l'implementation
                 add_order_to_redis(order.id, order.user_id, order.total_amount, order.order_items)
                 rows_added += 1
-                print(order)
 
             rows_added = len(orders_from_mysql)
         else:
