@@ -1,0 +1,48 @@
+name: Deploy (Self-Hosted)
+
+on:
+  push:
+    branches: [ main, master ]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Check runner environment
+        run: |
+          docker --version
+          docker compose version || docker-compose version || true
+
+      - uses: actions/checkout@v4
+
+      - name: Create/Update .env for production
+        run: |
+          cat > .env << 'EOF'
+          DB_HOST=mysql
+          DB_PORT=3306
+          DB_NAME=labo02_db
+          DB_USER=labo02
+          DB_PASSWORD=labo02
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          REDIS_DB=0
+          FLASK_ENV=production
+          EOF
+
+      - name: Pull & build
+        run: |
+          docker compose pull || true
+          docker compose build --no-cache
+
+      - name: Up app
+        run: |
+          docker compose up -d --remove-orphans
+
+      - name: Show status
+        run: |
+          docker compose ps
+          docker compose logs -n 100 store_manager || true
