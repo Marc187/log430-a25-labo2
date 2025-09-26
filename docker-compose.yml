@@ -1,8 +1,6 @@
 services:
   store_manager:
     build: .
-    volumes:
-      - .:/app
     env_file:
       - .env
     environment:
